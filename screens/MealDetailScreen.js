@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useContext } from "react";
 import {
   Text,
   View,
@@ -8,42 +8,36 @@ import {
   Button,
   Pressable,
   Linking,
+  AsyncStorage,
 } from "react-native";
-import MealDetails from "../components/MealDetails";
+import MealDetails from "../components/MealDetail/MealDetails";
 import List from "../components/List";
 import IconButton from "../components/IconButton";
-import {useNavigation} from '@react-navigation/native'
 import { MEALS } from "../data/dummy-data";
+import { FavoritesContext } from "../store/context/favorites-context";
 
 function MealDetailScreen({ route, navigation }) {
-const [favorites, setFavorites] = useState([]);
+  const favoriteMealsCtx = useContext(FavoritesContext);
   const mealId = route.params.mealId;
 
   const selectedMeal = MEALS.find((meal) => meal.id === mealId);
 
-  function headerButtonPressHandler() {
+  const mealIsFavorite = favoriteMealsCtx.ids.includes(mealId);
+
+  function changeFavoriteStatusHandler() {
+    if (mealIsFavorite) {
+      favoriteMealsCtx.removeFavorite(mealId);
+      console.log("Remove favorite: " + mealId);
+    } else {
+      favoriteMealsCtx.addFavorite(mealId);
+      console.log("Add favorite: " + mealId);
+    }
     console.log("Header button pressed");
-    addFavoriteHandler(selectedMeal.id);
-    console.log("Favorites button: " + favorites)
   }
   function headerButtonLongPressHandler() {
     console.log("Header button Long pressed");
-    navigation.navigate('Favorites', {
-        favorites: favorites,
-    });
-
+    navigation.navigate("Favorites");
   }
-  //store favorite meal id into the array
-  function addFavoriteHandler(favoriteMeal) {
-    setFavorites((prevFavorites) => [...prevFavorites, favoriteMeal]);
-    console.log(favoriteMeal);
-    console.log("Favorites handler: ", favorites);
-    console.log("Meal id: ", route.params.favoriteId);
-  }
-
-  useLayoutEffect(()=>{
-    //navigation.navigate('App')
-  },[headerButtonLongPressHandler]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -51,14 +45,14 @@ const [favorites, setFavorites] = useState([]);
         return (
           <IconButton
             icon="star"
-            color="white"
-            onPress={headerButtonPressHandler}
+            color={mealIsFavorite ? "yellow" : "white"}
+            onPress={changeFavoriteStatusHandler}
             onLongPress={headerButtonLongPressHandler}
           />
         );
       },
     });
-  }, [navigation, headerButtonPressHandler]);
+  }, [navigation, changeFavoriteStatusHandler]);
 
   return (
     <View style={{ flex: 1 }}>
